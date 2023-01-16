@@ -1,9 +1,13 @@
 use anyhow::Result;
+use cgmath::Vector2;
 use pollster::FutureExt;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 use wgpu::{
-    Backends, Device, Features, Limits, PowerPreference, Queue, RequestAdapterOptions, Surface,
+    Backends, Device, Features, Limits, PowerPreference, Queue, RenderPassDescriptor,
+    RequestAdapterOptions, Surface,
 };
+
+#[derive(Debug)]
 pub struct Internal {
     device: Device,
     queue: Queue,
@@ -41,5 +45,22 @@ impl Internal {
             queue,
             surface,
         })
+    }
+
+    pub fn render(&mut self, window_size: Vector2<usize>) -> Result<()> {
+        let mut encoder = self.device.create_command_encoder(&Default::default());
+        // per pipeline
+        {
+            let mut render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
+                label: None,
+                color_attachments: &[],
+                depth_stencil_attachment: None,
+            });
+
+            //render_pass.set_pipeline(pipeline);
+            //render_pass.draw(vertices, instances);
+        }
+
+        Ok(())
     }
 }

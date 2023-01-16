@@ -7,9 +7,13 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.68"
-cgmath = "0.18.0"
+cgmath = { git = "https://github.com/rustgd/cgmath", features = ["mint", "bytemuck"] }
 image = "0.24.5"
 pollster = "0.2.5"
 raw-window-handle = "0.5.0"
 wgpu = { git = "https://github.com/gfx-rs/wgpu"}
 naga = { git = "https://github.com/gfx-rs/naga", features = ["default", "wgsl-in", "wgsl-out"] }
+arena = { path = "../arena" }
+rayon = "1.6.1"
+bytemuck = { version = "1.12.3", features = ["derive"] }
+itertools = "0.10.5"
