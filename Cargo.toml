@@ -6,7 +6,23 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = ["internal"]
+members = ["internal", "arena"]
+resolver = "2"
 
 [dependencies]
+internal = { path = "internal"}
+raw-window-handle = "0.5.0"
+anyhow = "1.0.68"
 
+[profile.release]
+debug = 1
+incremental = true
+lto = "off"
+
+[[bin]]
+name = "kittengpu"
+path = "src/main.rs"
+
+[lib]
+name = "kittengpu_lib"
+path = "src/lib/lib.rs"
