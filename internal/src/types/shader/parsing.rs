@@ -28,6 +28,34 @@ pub fn generate_bind_group_layouts(
     })
 }
 
+pub fn query_attachments(module: &naga::Module) -> Result<usize> {
+    let function = &module
+        .entry_points
+        .iter()
+        .find(|entry_point| entry_point.stage == naga::ShaderStage::Fragment)
+        .ok_or_else(|| anyhow!("No fragment shader stage!"))?
+        .function;
+
+    let result = function
+        .result
+        .as_ref()
+        .ok_or_else(|| anyhow!("No fragment output!"))?;
+
+    // test if output is to a location
+    if let Some(binding) = &result.binding {
+        match binding {
+            naga::Binding::Location { .. } => Ok(1),
+            naga::Binding::BuiltIn(..) => bail!("BuiltIn not supported."),
+        }
+    } else {
+        // result is a structure, look up the type
+        match &module.types[result.ty].inner {
+            naga::TypeInner::Struct { members, .. } => Ok(members.len()),
+            _ => bail!("Strange output type encountered."),
+        }
+    }
+}
+
 pub fn generate_layout_entries(
     module: &naga::Module,
 ) -> Result<HashMap<usize, Vec<wgpu::BindGroupLayoutEntry>>> {
@@ -133,5 +161,16 @@ fn map_naga_inner_type_to_wgpu_binding_type(ty: &naga::Type) -> Result<wgpu::Bin
             wgpu::SamplerBindingType::Filtering,
         )),
         _ => bail!("not a valid type for a binding resource"),
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::query_attachments;
+
+    #[test]
+    fn attachment() {
+        let module = naga::front::wgsl::parse_str(include_str!("../../../main.wgsl")).unwrap();
+        assert_eq!(1, query_attachments(&module).unwrap())
     }
 }
