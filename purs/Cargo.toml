@@ -1,0 +1,12 @@
+[package]
+name = "purs"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.68"
+wgpu = { git = "https://github.com/gfx-rs/wgpu"}
+naga = { git = "https://github.com/gfx-rs/naga", features = ["default", "wgsl-in", "wgsl-out"] }
+itertools = "0.10.5"

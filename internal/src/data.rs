@@ -1,17 +1,14 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, Result};
 use arena::{Arena, Key};
-use std::{collections::HashMap, hash::Hash, rc::Rc};
+use std::{collections::HashMap, rc::Rc};
 use wgpu::{
     BlendState, Device, FragmentState, MultisampleState, PrimitiveState, RenderPipeline,
     RenderPipelineDescriptor, Sampler, VertexState,
 };
 
 use crate::types::{
-    pipeline::{self, PipelineRequirements},
-    render_attachments::RenderAttachments,
-    shader::Shader,
-    texture::Texture,
-    vertex::Vertex,
+    pipeline::PipelineRequirements, render_attachments::RenderAttachments, shader::Shader,
+    texture::Texture, vertex::Vertex,
 };
 
 #[derive(Debug, Default)]
