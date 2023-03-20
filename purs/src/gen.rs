@@ -20,15 +20,16 @@ pub fn generate_bind_group_layouts(
     device: &wgpu::Device,
     entries: HashMap<usize, Vec<wgpu::BindGroupLayoutEntry>>,
 ) -> Vec<wgpu::BindGroupLayout> {
-    entries.iter().fold(vec![], |mut acc, (_, entries)| {
-        acc.push(
+    // Iterate over the entries collection, create bind group layouts, and collect them into a vector.
+    entries
+        .values()
+        .map(|entries| {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: None,
                 entries,
-            }),
-        );
-        acc
-    })
+            })
+        })
+        .collect::<Vec<_>>()
 }
 
 pub fn generate_layout_entries(
@@ -37,47 +38,53 @@ pub fn generate_layout_entries(
     module
         .global_variables
         .iter()
-        .filter(|(_, b)| b.binding.is_some())
+        .filter_map(|(handle, var)| var.binding.as_ref().map(|binding| (handle, var, binding)))
         .try_fold(
             HashMap::<usize, Vec<BindGroupLayoutEntry>>::new(),
-            |mut acc, (global_handle, var)| {
-                let stages =
-                    module
-                        .entry_points
-                        .iter()
-                        .fold(ShaderStages::NONE, |stages, entry_point| match entry_point
+            |mut acc, (global_handle, var, binding)| {
+                let stages = module
+                    .entry_points
+                    .iter()
+                    .filter_map(|entry_point| {
+                        entry_point
                             .function
                             .expressions
                             .iter()
-                            .find_map(|(_, x)| match x {
+                            .find_map(|(_, expr)| match expr {
                                 naga::Expression::GlobalVariable(handle)
                                     if *handle == global_handle =>
                                 {
                                     Some(entry_point.stage)
                                 }
                                 _ => None,
-                            }) {
-                            Some(s) => match s {
-                                naga::ShaderStage::Vertex => stages | ShaderStages::VERTEX,
-                                naga::ShaderStage::Fragment => stages | ShaderStages::FRAGMENT,
-                                naga::ShaderStage::Compute => stages | ShaderStages::COMPUTE,
-                            },
-                            None => stages,
-                        });
-                let binding = var
-                    .binding
-                    .as_ref()
-                    .ok_or_else(|| anyhow!("unable to get resource binding."))?;
-                let ty =
-                    map_naga_inner_type_to_wgpu_binding_type(module.types.get_handle(var.ty)?)?;
-                acc.entry(binding.group.try_into()?)
-                    .or_default()
-                    .push(BindGroupLayoutEntry {
-                        binding: binding.binding,
-                        visibility: stages,
-                        ty,
-                        count: None,
-                    });
+                            })
+                    })
+                    .fold(
+                        ShaderStages::NONE,
+                        |stages, shader_stage| match shader_stage {
+                            naga::ShaderStage::Vertex => stages | ShaderStages::VERTEX,
+                            naga::ShaderStage::Fragment => stages | ShaderStages::FRAGMENT,
+                            naga::ShaderStage::Compute => stages | ShaderStages::COMPUTE,
+                        },
+                    );
+
+                let ty = map_naga_inner_type_to_wgpu_binding_type(module.types.get_handle(var.ty)?)
+                    .map_err(|e| {
+                        anyhow!("Failed to map Naga inner type to WGPU binding type: {}", e)
+                    })?;
+
+                let group: usize = binding
+                    .group
+                    .try_into()
+                    .map_err(|e| anyhow!("Failed to convert binding group to usize: {}", e))?;
+
+                acc.entry(group).or_default().push(BindGroupLayoutEntry {
+                    binding: binding.binding,
+                    visibility: stages,
+                    ty,
+                    count: None,
+                });
+
                 Ok(acc)
             },
         )
