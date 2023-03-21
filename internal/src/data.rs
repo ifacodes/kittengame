@@ -2,8 +2,8 @@ use anyhow::{anyhow, Result};
 use arena::{Arena, Key};
 use std::{collections::HashMap, rc::Rc};
 use wgpu::{
-    BlendState, Device, FragmentState, MultisampleState, PrimitiveState, RenderPipeline,
-    RenderPipelineDescriptor, Sampler, VertexState,
+    BlendState, ColorTargetState, Device, FragmentState, MultisampleState, PrimitiveState,
+    RenderPipeline, RenderPipelineDescriptor, Sampler, VertexState,
 };
 
 use crate::types::{
@@ -23,23 +23,28 @@ impl InternalData {
     pub fn get_pipeline(
         &mut self,
         device: &Device,
-        attachments: RenderAttachments,
+        render_attachment_format: wgpu::TextureFormat,
         key: Key<Shader>,
         primitive: PrimitiveState,
-        blend: &[Option<BlendState>; RenderAttachments::MAXCOLORATTACHMENTS],
     ) -> Result<Rc<RenderPipeline>> {
         let shader = self.shaders.get(key).ok_or_else(|| anyhow!(""))?;
         let mut targets: [Option<wgpu::ColorTargetState>; RenderAttachments::MAXCOLORATTACHMENTS] =
             Default::default();
 
-        (0..RenderAttachments::MAXCOLORATTACHMENTS).for_each(|n| {
-            targets[n] = attachments.get(n).and_then(|opt| {
-                opt.as_ref().map(|attachment| wgpu::ColorTargetState {
-                    format: attachment.format,
-                    blend: blend[n],
-                    write_mask: wgpu::ColorWrites::all(),
-                })
-            })
+        // (0..RenderAttachments::MAXCOLORATTACHMENTS).for_each(|n| {
+        //     targets[n] = attachments.get(n).and_then(|opt| {
+        //         opt.as_ref().map(|attachment| wgpu::ColorTargetState {
+        //             format: attachment.format,
+        //             blend: blend[n],
+        //             write_mask: wgpu::ColorWrites::all(),
+        //         })
+        //     })
+        // });
+
+        targets[0] = Some(ColorTargetState {
+            format: render_attachment_format,
+            blend: Some(wgpu::BlendState::REPLACE),
+            write_mask: wgpu::ColorWrites::all(),
         });
 
         Ok(self
@@ -48,7 +53,7 @@ impl InternalData {
             .or_default()
             .entry(PipelineRequirements {
                 primitive,
-                targets: [None, None, None, None, None, None, None, None],
+                targets: targets.clone(),
             })
             .or_insert_with(|| {
                 Rc::new(device.create_render_pipeline(&RenderPipelineDescriptor {
