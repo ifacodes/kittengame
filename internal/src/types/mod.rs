@@ -1,4 +1,5 @@
 //! internal types used in kittengpu.
+pub mod framebuffer;
 pub mod pipeline;
 pub mod render_attachments;
 pub mod shader;
