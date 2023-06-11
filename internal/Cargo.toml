@@ -11,9 +11,12 @@ cgmath = { git = "https://github.com/rustgd/cgmath", features = ["mint", "bytemu
 image = "0.24.5"
 pollster = "0.2.5"
 raw-window-handle = "0.5.0"
-wgpu = { git = "https://github.com/gfx-rs/wgpu"}
-naga = { git = "https://github.com/gfx-rs/naga", features = ["default", "wgsl-in", "wgsl-out"] }
+wgpu = { git = "https://github.com/gfx-rs/wgpu", featrues = ["serde"]}
+naga = { git = "https://github.com/gfx-rs/naga", features = ["default", "wgsl-in", "wgsl-out", "serde", "deserialize", "serialize"] }
 arena = { path = "../arena" }
 rayon = "1.6.1"
 bytemuck = { version = "1.12.3", features = ["derive"] }
 itertools = "0.10.5"
+serde = { version = "1.0.164", features = ["derive"] }
+serde_json = "1.0.96"
+log = "0.4.19"

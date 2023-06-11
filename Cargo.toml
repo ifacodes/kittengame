@@ -10,10 +10,11 @@ members = ["internal", "arena", "window", "purs"]
 resolver = "2"
 
 [dependencies]
-internal = { path = "internal"}
-window = { path = "window"}
+internal = { path = "internal" }
+window = { path = "window" }
 anyhow = "1.0.68"
-
+cgmath = { git = "https://github.com/rustgd/cgmath", features = ["mint", "bytemuck"] }
+env_logger = "0.10.0"
 
 [profile.release]
 debug = 1
