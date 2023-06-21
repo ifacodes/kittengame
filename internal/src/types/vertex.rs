@@ -1,3 +1,4 @@
+use anyhow::Result;
 use bytemuck::{Pod, Zeroable};
 use cgmath::Vector2;
 use image::Rgba;
@@ -22,6 +23,11 @@ impl Vertex {
         //attributes: &wgpu::vertex_attr_array![0 => Float32x2, 1 => Float32x2, 2 => Uint8x4],
         attributes: &wgpu::vertex_attr_array![0 => Float32x2, 1 => Uint8x4],
     };
+
+    pub fn test(&self) -> Result<()> {
+        let f: [f32; 4] = self.color.0.map(f32::from);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

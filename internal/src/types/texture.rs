@@ -5,8 +5,8 @@ use wgpu::{Device, Queue};
 #[derive(Debug)]
 pub struct Texture {
     texture: wgpu::Texture,
-    format: wgpu::TextureFormat,
-    size: Vector2<usize>,
+    pub format: wgpu::TextureFormat,
+    pub size: Vector2<usize>,
 }
 
 impl Texture {
@@ -52,6 +52,7 @@ pub fn new_wgpu_texture(
         format,
         usage,
         label: None,
+        view_formats: &[],
     })
 }
 

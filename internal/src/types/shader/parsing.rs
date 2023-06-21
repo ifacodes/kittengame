@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use anyhow::{anyhow, bail, Result};
 
 pub fn generate_pipeline_layout(
@@ -15,17 +13,25 @@ pub fn generate_pipeline_layout(
 
 pub fn generate_bind_group_layouts(
     device: &wgpu::Device,
-    entries: HashMap<usize, Vec<wgpu::BindGroupLayoutEntry>>,
-) -> Vec<wgpu::BindGroupLayout> {
-    entries.iter().fold(vec![], |mut acc, (_, entries)| {
-        acc.push(
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: None,
-                entries,
-            }),
-        );
-        acc
+    entries: [Vec<wgpu::BindGroupLayoutEntry>; 4],
+) -> [wgpu::BindGroupLayout; 4] {
+    entries.map(|layout_entries| {
+        device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: None,
+            entries: &layout_entries,
+        })
     })
+}
+
+pub fn get_entrypoint_name<'a>(
+    module: &'a naga::Module,
+    ty: &'a naga::ShaderStage,
+) -> Option<&'a str> {
+    module
+        .entry_points
+        .iter()
+        .find(|stage| ty == &stage.stage)
+        .map(|entry| entry.name.as_str())
 }
 
 pub fn query_attachments(module: &naga::Module) -> Result<usize> {
@@ -58,13 +64,13 @@ pub fn query_attachments(module: &naga::Module) -> Result<usize> {
 
 pub fn generate_layout_entries(
     module: &naga::Module,
-) -> Result<HashMap<usize, Vec<wgpu::BindGroupLayoutEntry>>> {
+) -> Result<[Vec<wgpu::BindGroupLayoutEntry>; 4]> {
     module
         .global_variables
         .iter()
         .filter(|(_, b)| b.binding.is_some())
         .try_fold(
-            HashMap::<usize, Vec<wgpu::BindGroupLayoutEntry>>::new(),
+            [vec![], vec![], vec![], vec![]],
             |mut acc, (global_handle, var)| {
                 let stages = module.entry_points.iter().fold(
                     wgpu::ShaderStages::NONE,
@@ -94,14 +100,14 @@ pub fn generate_layout_entries(
                     .ok_or_else(|| anyhow!("unable to get resource binding."))?;
                 let ty =
                     map_naga_inner_type_to_wgpu_binding_type(module.types.get_handle(var.ty)?)?;
-                acc.entry(binding.group.try_into()?).or_default().push(
-                    wgpu::BindGroupLayoutEntry {
+                if let Some(vec) = acc.get_mut(binding.group as usize) {
+                    vec.push(wgpu::BindGroupLayoutEntry {
                         binding: binding.binding,
                         visibility: stages,
                         ty,
                         count: None,
-                    },
-                );
+                    });
+                }
                 Ok(acc)
             },
         )
@@ -170,7 +176,8 @@ mod test {
 
     #[test]
     fn attachment() {
-        let module = naga::front::wgsl::parse_str(include_str!("../../../main.wgsl")).unwrap();
+        let module =
+            naga::front::wgsl::parse_str(include_str!("../../../../shaders/main.wgsl")).unwrap();
         assert_eq!(1, query_attachments(&module).unwrap())
     }
 }

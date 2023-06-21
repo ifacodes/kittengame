@@ -27,13 +27,9 @@ impl FrameBuffer {
         let mut states: [Option<ColorTargetState>; 8] = Default::default();
 
         for (index, color_attachment) in self.color_attachments.iter().enumerate() {
-            if let Some(color_attachment) = color_attachment {
-                states[index] = Some(ColorTargetState {
-                    format: color_attachment.format,
-                    blend: blends.get(index).and_then(|b| *b), // Possibly replace with a way to pass in the blend modes?
-                    write_mask: ColorWrites::all(),
-                })
-            }
+            states[index] = color_attachment
+                .as_ref()
+                .map(|a| a.color_target_state(blends.get(index).and_then(|b| *b)));
         }
 
         states
@@ -62,6 +58,16 @@ impl FrameBuffer {
 #[derive(Debug)]
 pub struct RenderAttachment {
     view: TextureView,
-    format: TextureFormat,
+    pub format: TextureFormat,
     depth_stencil: bool,
+}
+
+impl RenderAttachment {
+    pub fn color_target_state(&self, blend: Option<BlendState>) -> wgpu::ColorTargetState {
+        ColorTargetState {
+            format: self.format,
+            blend,
+            write_mask: ColorWrites::all(),
+        }
+    }
 }

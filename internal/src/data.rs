@@ -7,8 +7,8 @@ use wgpu::{
 };
 
 use crate::types::{
-    pipeline::PipelineRequirements, render_attachments::RenderAttachments, shader::Shader,
-    texture::Texture, vertex::Vertex,
+    framebuffer::RenderAttachment, pipeline::PipelineRequirements,
+    render_attachments::RenderAttachments, shader::Shader, texture::Texture, vertex::Vertex,
 };
 
 #[derive(Debug, Default)]
@@ -20,31 +20,27 @@ pub struct InternalData {
 }
 
 impl InternalData {
+    pub fn new() -> Self {
+        todo!()
+    }
+
     pub fn get_pipeline(
         &mut self,
         device: &Device,
-        render_attachment_format: wgpu::TextureFormat,
+        render_attachment: &RenderAttachment,
         key: Key<Shader>,
         primitive: PrimitiveState,
     ) -> Result<Rc<RenderPipeline>> {
-        let shader = self.shaders.get(key).ok_or_else(|| anyhow!(""))?;
+        let shader = self
+            .shaders
+            .get(key)
+            .ok_or_else(|| anyhow!("Could not find shader with key '{:?}'", key))?;
+
         let mut targets: [Option<wgpu::ColorTargetState>; RenderAttachments::MAXCOLORATTACHMENTS] =
             Default::default();
 
-        // (0..RenderAttachments::MAXCOLORATTACHMENTS).for_each(|n| {
-        //     targets[n] = attachments.get(n).and_then(|opt| {
-        //         opt.as_ref().map(|attachment| wgpu::ColorTargetState {
-        //             format: attachment.format,
-        //             blend: blend[n],
-        //             write_mask: wgpu::ColorWrites::all(),
-        //         })
-        //     })
-        // });
-
-        targets[0] = Some(ColorTargetState {
-            format: render_attachment_format,
-            blend: Some(wgpu::BlendState::REPLACE),
-            write_mask: wgpu::ColorWrites::all(),
+        (0..RenderAttachments::MAXCOLORATTACHMENTS).for_each(|n| {
+            targets[n] = Some(render_attachment.color_target_state(Some(BlendState::REPLACE)))
         });
 
         Ok(self
@@ -58,7 +54,7 @@ impl InternalData {
             .or_insert_with(|| {
                 Rc::new(device.create_render_pipeline(&RenderPipelineDescriptor {
                     label: None,
-                    layout: shader.pipeline_layout.as_ref(),
+                    layout: Some(&shader.pipeline_layout),
                     vertex: VertexState {
                         module: &shader.module,
                         entry_point: "vertex",
