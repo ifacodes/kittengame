@@ -6,15 +6,17 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = ["internal", "arena", "window", "purs"]
+members = ["internal", "arena", "purs"]
 resolver = "2"
 
 [dependencies]
 internal = { path = "internal" }
-window = { path = "window" }
 anyhow = "1.0.68"
 cgmath = { git = "https://github.com/rustgd/cgmath", features = ["mint", "bytemuck"] }
 env_logger = "0.10.0"
+winit = { version = "0.28.6", features = ["mint"] }
+raw-window-handle = "0.5.0"
+log = "0.4.19"
 
 [profile.release]
 debug = 1
