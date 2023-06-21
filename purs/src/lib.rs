@@ -15,8 +15,7 @@ mod test {
 
     #[test]
     fn attachment() {
-        let module =
-            naga::front::wgsl::parse_str(include_str!("../../internal/main.wgsl")).unwrap();
+        let module = naga::front::wgsl::parse_str(include_str!("../../shaders/main.wgsl")).unwrap();
         query_types(&module);
         println!("{module:#?}");
         assert_eq!(1, query_attachments(&module).unwrap())
