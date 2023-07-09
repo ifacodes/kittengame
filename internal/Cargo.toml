@@ -24,7 +24,3 @@ log = "0.4.19"
 [dev-dependencies]
 winit = "0.28.6"
 
-[[test]]
-name = "init"
-path = "tests/init.rs"
-harness = false

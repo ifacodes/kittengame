@@ -7,6 +7,11 @@ use wgpu::{
     SurfaceConfiguration,
 };
 
+use crate::{
+    types::shader::{load_shader, Shader},
+    InternalData, WindowTrait,
+};
+
 /// This struct contains a WGPU device, queue, and surface.
 #[derive(Debug)]
 pub struct Internal {
@@ -15,12 +20,14 @@ pub struct Internal {
     queue: Queue,
     surface: Surface,
     config: SurfaceConfiguration,
+    default_shader: Shader,
+    default_pipeline: wgpu::RenderPipeline,
 }
 
 impl Internal {
     pub fn new<W>(window: &W) -> Result<Internal>
     where
-        W: HasRawWindowHandle + HasRawDisplayHandle,
+        W: WindowTrait,
     {
         let backends = wgpu::util::backend_bits_from_env().unwrap_or_else(wgpu::Backends::all);
         let dx12_shader_compiler = wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default();
@@ -66,12 +73,54 @@ impl Internal {
         }
         .block_on();
 
+        let size = window.size()?;
+
         let mut config = surface
-            .get_default_config(&adapter, 1270, 720)
+            .get_default_config(&adapter, size.x as u32, size.y as u32)
             .expect("surface isn't supported by the adapter.");
         let surface_view_format = config.format.add_srgb_suffix();
         config.view_formats.push(surface_view_format);
         surface.configure(&device, &config);
+
+        let default_shader = load_shader(
+            &device,
+            include_str!("../../shaders/fullscreen_triangle.wgsl"),
+        )?;
+
+        let default_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: None,
+            layout: Some(&default_shader.pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &default_shader.module,
+                entry_point: "vert_main",
+                buffers: &[],
+            },
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                unclipped_depth: false,
+                polygon_mode: wgpu::PolygonMode::Fill,
+                conservative: false,
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &default_shader.module,
+                entry_point: "frag_main",
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: config.format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::all(),
+                })],
+            }),
+            multiview: None,
+        });
 
         Ok(Self {
             device,
@@ -79,10 +128,15 @@ impl Internal {
             queue,
             surface,
             config,
+            default_shader,
+            default_pipeline,
         })
     }
 
-    pub fn render(&mut self, window_size: Vector2<usize>) -> Result<()> {
+    pub fn render(&mut self, data: &InternalData, window_size: Vector2<usize>) -> Result<()> {
+        self.config.height = window_size.y as u32;
+        self.config.width = window_size.x as u32;
+        self.surface.configure(&self.device, &self.config);
         let output = self.surface.get_current_texture()?;
         let view = output.texture.create_view(&Default::default());
 
@@ -95,15 +149,20 @@ impl Internal {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLUE),
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 196.0 / 255.0,
+                            g: 99.0 / 255.0,
+                            b: 246.0 / 255.0,
+                            a: 1.0,
+                        }),
                         store: true,
                     },
                 })],
                 depth_stencil_attachment: None,
             });
 
-            //render_pass.set_pipeline(pipeline);
-            //render_pass.draw(vertices, instances);
+            render_pass.set_pipeline(&self.default_pipeline);
+            render_pass.draw(0..3, 0..1);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

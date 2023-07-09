@@ -3,6 +3,8 @@ use anyhow::Result;
 use itertools::*;
 use naga::back::wgsl::{write_string, WriterFlags};
 use naga::valid::{Capabilities, ValidationFlags, Validator};
+
+use super::pipeline;
 #[derive(Debug)]
 /// Internal shader type.
 pub struct Shader {
@@ -17,13 +19,23 @@ pub fn load_shader(device: &wgpu::Device, source: &str) -> Result<Shader> {
     let module = naga::front::wgsl::parse_str(source)?;
     let info = Validator::new(ValidationFlags::all(), Capabilities::all()).validate(&module)?;
 
-    let bind_group_layouts =
-        parsing::generate_bind_group_layouts(device, parsing::generate_layout_entries(&module)?);
-    let bind_group_refs = {
-        let [ref a, ref b, ref c, ref d] = bind_group_layouts;
-        &[a, b, c, d]
+    let layout_entries = parsing::generate_layout_entries(&module)?;
+    let (bind_group_layouts, pipeline_layout) = {
+        if layout_entries.iter().all(|v| v.is_empty()) {
+            (
+                parsing::generate_bind_group_layouts(device, layout_entries),
+                parsing::generate_pipeline_layout(device, &[]),
+            )
+        } else {
+            let bind_group_layouts = parsing::generate_bind_group_layouts(device, layout_entries);
+            let bind_group_refs = {
+                let [ref a, ref b, ref c, ref d] = bind_group_layouts;
+                &[a, b, c, d]
+            };
+            let pipeline_layout = parsing::generate_pipeline_layout(device, bind_group_refs);
+            (bind_group_layouts, pipeline_layout)
+        }
     };
-    let pipeline_layout = parsing::generate_pipeline_layout(device, bind_group_refs);
 
     let attachments = parsing::query_attachments(&module)?;
 

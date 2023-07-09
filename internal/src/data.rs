@@ -21,6 +21,16 @@ pub struct InternalData {
 
 impl InternalData {
     pub fn new() -> Self {
+        let mut data = InternalData::default();
+
+        data
+    }
+
+    pub fn create_shader(&mut self) -> Result<Key<Shader>> {
+        todo!()
+    }
+
+    pub fn get_shader(&mut self) -> Result<Key<Shader>> {
         todo!()
     }
 
