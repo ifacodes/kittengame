@@ -4,7 +4,7 @@
 mod window;
 use anyhow::Result;
 use cgmath::{vec2, Vector2};
-use internal::{Internal, InternalData};
+use internal::{Internal, InternalData, WindowTrait};
 use log::info;
 use window::*;
 use winit::dpi::PhysicalSize;
@@ -12,7 +12,7 @@ use winit::dpi::PhysicalSize;
 pub struct KittenGame {
     window: KittenWindow,
     internal_renderer: Internal,
-    //internal_graphics_data: InternalData,
+    internal_graphics_data: InternalData,
     window_size: Vector2<usize>,
 }
 
@@ -25,14 +25,15 @@ impl KittenGame {
         )?;
 
         let internal_renderer = Internal::new(&window)?;
-        //let interal_graphics_data = InternalData::default();
+        let internal_graphics_data = InternalData::default();
         // mouse handling / gamepad handling / keyboard handling (input)
         // audio??
         // graphics :3
 
-        let kitten_game = KittenGame {
+        let mut kitten_game = KittenGame {
             window,
             internal_renderer,
+            internal_graphics_data,
             window_size,
         };
 
@@ -45,20 +46,26 @@ impl KittenGame {
         );
     }
     fn init(&mut self) -> Result<()> {
-        todo!()
+        self.window.set_resizable(false);
+        Ok(())
     }
     fn quit(&mut self) -> Result<()> {
         info!("quitting!");
         Ok(())
     }
     fn update(&mut self) -> Result<()> {
+        if self.window.resizable() {
+            self.window_size = self.window.size()?.into();
+        }
+
         Ok(())
     }
     fn render(&mut self) -> Result<()> {
         // 1. select / load in shader.
         // 2. create / set pipeline
         // 3. draw
-        self.internal_renderer.render(self.window_size)?;
+        self.internal_renderer
+            .render(&self.internal_graphics_data, self.window_size)?;
         Ok(())
     }
 }

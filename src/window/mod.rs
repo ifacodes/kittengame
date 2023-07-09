@@ -1,5 +1,7 @@
 mod state;
 
+use cgmath::vec2;
+use internal::WindowTrait;
 pub use state::SharedState;
 use std::rc::Rc;
 
@@ -39,6 +41,7 @@ impl WindowLoop {
         Q: 'static + FnMut(&mut KittenGame) -> Result<()>,
     {
         let mut kitten_game = kitten_game;
+        init_fn(&mut kitten_game).unwrap();
         self.event_loop
             .run(move |event, _window_target, control_flow| {
                 control_flow.set_poll();
@@ -90,6 +93,27 @@ impl KittenWindow {
             },
             WindowLoop { state, event_loop },
         ))
+    }
+}
+
+impl WindowTrait for KittenWindow {
+    fn size(&self) -> std::result::Result<cgmath::mint::Vector2<usize>, anyhow::Error> {
+        let inner = self.state.window.inner_size();
+        Ok(vec2(inner.width as usize, inner.height as usize).into())
+    }
+
+    fn set_size(&mut self, size: (u32, u32)) {
+        self.state
+            .window
+            .set_inner_size(PhysicalSize::new(size.0, size.1))
+    }
+
+    fn resizable(&self) -> bool {
+        self.state.window.is_resizable()
+    }
+
+    fn set_resizable(&mut self, resizable: bool) {
+        self.state.window.set_resizable(resizable)
     }
 }
 
