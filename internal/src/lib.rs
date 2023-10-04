@@ -1,33 +1,29 @@
 pub mod data;
 pub mod internal;
+mod renderpass;
 pub mod types;
-
 use anyhow::Result;
-use cgmath::mint::Vector2;
 pub use data::InternalData;
+use glam::{UVec2, Vec2};
 pub use internal::Internal;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
-
-pub trait WindowTrait: HasRawDisplayHandle + HasRawWindowHandle {
-    fn size(&self) -> Result<Vector2<usize>>;
-    fn set_size(&mut self, size: (u32, u32));
-    fn resizable(&self) -> bool;
-    fn set_resizable(&mut self, resizable: bool);
-}
+use types::Color;
 
 impl Internal {
-    fn render_size(&self) -> Vector2<u32> {
+    fn render_size(&self) -> UVec2 {
         todo!()
     }
-
-    fn set_clear_colour(&mut self) {
-        todo!()
-    }
-
-    fn begin_draw(&mut self) {
-        todo!()
-    }
-    fn end_draw(&mut self) {
-        todo!()
+    fn draw_rect<P: Into<Vec2>, S: Into<Vec2>, C: Into<Color>>(
+        &self,
+        position: P,
+        size: S,
+        color: C,
+    ) {
+        let position = position.into();
+        let size = size.into();
+        let color = color.into();
+        // create vertices?
     }
 }
+
+pub trait Game {}

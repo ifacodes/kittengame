@@ -1184,7 +1184,7 @@ impl<T> FromIterator<T> for Arena<T> {
     #[inline]
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut arena = Arena::new();
-        arena.extend(iter.into_iter());
+        arena.extend(iter);
         arena
     }
 }
@@ -1222,13 +1222,7 @@ pub struct Key<T> {
 impl<T> Clone for Key<T> {
     #[inline]
     fn clone(&self) -> Self {
-        Self {
-            #[cfg(feature = "uuid")]
-            uuid: Uuid::new_v4(),
-            uid: self.uid,
-            idx: self.idx,
-            _ty: PhantomData,
-        }
+        *self
     }
 }
 

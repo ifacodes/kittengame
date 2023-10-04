@@ -7,12 +7,17 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.68"
-cgmath = { git = "https://github.com/rustgd/cgmath", features = ["mint", "bytemuck"] }
+glam = { version = "0.24.1", features = ["bytemuck", "serde", "mint"] }
 image = "0.24.5"
 pollster = "0.2.5"
 raw-window-handle = "0.5.0"
-wgpu = { git = "https://github.com/gfx-rs/wgpu", featrues = ["serde"]}
-naga = { git = "https://github.com/gfx-rs/naga", features = ["default", "wgsl-in", "wgsl-out", "serde", "deserialize", "serialize"] }
+wgpu = { git = "https://github.com/gfx-rs/wgpu", featrues = ["serde"] }
+naga = { git = "https://github.com/gfx-rs/naga", features = [
+    "default",
+    "wgsl-in",
+    "wgsl-out",
+    "serialize",
+] }
 arena = { path = "../arena" }
 rayon = "1.6.1"
 bytemuck = { version = "1.12.3", features = ["derive"] }
@@ -20,7 +25,8 @@ itertools = "0.10.5"
 serde = { version = "1.0.164", features = ["derive"] }
 serde_json = "1.0.96"
 log = "0.4.19"
+window = { path = "../window" }
+thiserror = "1.0.47"
 
 [dev-dependencies]
-winit = "0.28.6"
-
+winit = "0.29.0-beta.0"

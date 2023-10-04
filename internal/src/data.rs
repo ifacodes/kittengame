@@ -2,13 +2,16 @@ use anyhow::{anyhow, Result};
 use arena::{Arena, Key};
 use std::{collections::HashMap, rc::Rc};
 use wgpu::{
-    BlendState, ColorTargetState, Device, FragmentState, MultisampleState, PrimitiveState,
-    RenderPipeline, RenderPipelineDescriptor, Sampler, VertexState,
+    BlendState, Device, FragmentState, MultisampleState, PrimitiveState, RenderPipeline,
+    RenderPipelineDescriptor, Sampler, VertexState,
 };
 
 use crate::types::{
-    framebuffer::RenderAttachment, pipeline::PipelineRequirements,
-    render_attachments::RenderAttachments, shader::Shader, texture::Texture, vertex::Vertex,
+    framebuffer::{FrameBuffer, RenderAttachment},
+    pipeline::PipelineRequirements,
+    shader::Shader,
+    texture::Texture,
+    vertex::Vertex,
 };
 
 #[derive(Debug, Default)]
@@ -46,10 +49,10 @@ impl InternalData {
             .get(key)
             .ok_or_else(|| anyhow!("Could not find shader with key '{:?}'", key))?;
 
-        let mut targets: [Option<wgpu::ColorTargetState>; RenderAttachments::MAXCOLORATTACHMENTS] =
+        let mut targets: [Option<wgpu::ColorTargetState>; FrameBuffer::MAXCOLORATTACHMENTS] =
             Default::default();
 
-        (0..RenderAttachments::MAXCOLORATTACHMENTS).for_each(|n| {
+        (0..FrameBuffer::MAXCOLORATTACHMENTS).for_each(|n| {
             targets[n] = Some(render_attachment.color_target_state(Some(BlendState::REPLACE)))
         });
 
@@ -68,7 +71,7 @@ impl InternalData {
                     vertex: VertexState {
                         module: &shader.module,
                         entry_point: "vertex",
-                        buffers: &[Vertex::VERTEXBUFFERLAYOUT],
+                        buffers: &[Vertex::BUFFER_LAYOUT],
                     },
                     primitive,
                     depth_stencil: None,

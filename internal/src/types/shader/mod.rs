@@ -1,12 +1,10 @@
 mod parsing;
 use anyhow::Result;
-use itertools::*;
 use naga::back::wgsl::{write_string, WriterFlags};
 use naga::valid::{Capabilities, ValidationFlags, Validator};
 
-use super::pipeline;
-#[derive(Debug)]
 /// Internal shader type.
+#[derive(Debug)]
 pub struct Shader {
     pub module: wgpu::ShaderModule,
     pub bind_group_layouts: [wgpu::BindGroupLayout; 4],
@@ -79,17 +77,18 @@ mod test {
     fn mm() {
         let backends = wgpu::util::backend_bits_from_env().unwrap_or_else(wgpu::Backends::all);
         let dx12_shader_compiler = wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default();
+        let gles_minor_version = wgpu::Gles3MinorVersion::Automatic;
 
         let instance = wgpu::Instance::new(InstanceDescriptor {
             backends,
             dx12_shader_compiler,
+            gles_minor_version,
         });
 
         let (adapter, device, queue) = async {
-            let adapter =
-                wgpu::util::initialize_adapter_from_env_or_default(&instance, backends, None)
-                    .await
-                    .unwrap();
+            let adapter = wgpu::util::initialize_adapter_from_env_or_default(&instance, None)
+                .await
+                .unwrap();
 
             let adapter_info = adapter.get_info();
             println!("Using {} ({:?})", adapter_info.name, adapter_info.backend);

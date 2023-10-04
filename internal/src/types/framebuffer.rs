@@ -5,11 +5,13 @@ use wgpu::{
 
 #[derive(Debug, Default)]
 pub struct FrameBuffer {
-    pub color_attachments: [Option<RenderAttachment>; 8],
+    pub color_attachments: [Option<RenderAttachment>; Self::MAXCOLORATTACHMENTS],
     pub depth_stencil_attachment: Option<RenderAttachment>,
 }
 
 impl FrameBuffer {
+    pub const MAXCOLORATTACHMENTS: usize = 8;
+
     pub fn new(
         color_attachments: [Option<RenderAttachment>; 8],
         depth_stencil_attachment: Option<RenderAttachment>,

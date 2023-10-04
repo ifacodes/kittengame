@@ -1,4 +1,4 @@
-use cgmath::Vector2;
+use glam::UVec2;
 use wgpu::{Device, Queue};
 
 // Internal texture type.
@@ -6,7 +6,7 @@ use wgpu::{Device, Queue};
 pub struct Texture {
     texture: wgpu::Texture,
     pub format: wgpu::TextureFormat,
-    pub size: Vector2<usize>,
+    pub size: UVec2,
 }
 
 impl Texture {
@@ -32,7 +32,7 @@ impl<'a> TextureMut<'a> {
 /// create a new wgpu texture
 pub fn new_wgpu_texture(
     device: &Device,
-    size: Vector2<usize>,
+    size: UVec2,
     format: wgpu::TextureFormat,
     render_target: bool,
 ) -> wgpu::Texture {
@@ -42,8 +42,8 @@ pub fn new_wgpu_texture(
 
     device.create_texture(&wgpu::TextureDescriptor {
         size: wgpu::Extent3d {
-            width: size.x as u32,
-            height: size.y as u32,
+            width: size.x,
+            height: size.y,
             depth_or_array_layers: 1,
         },
         mip_level_count: 1,
@@ -56,6 +56,6 @@ pub fn new_wgpu_texture(
     })
 }
 
-pub fn new_depth_texture(device: &Device, size: Vector2<usize>) -> wgpu::Texture {
+pub fn new_depth_texture(device: &Device, size: UVec2) -> wgpu::Texture {
     new_wgpu_texture(device, size, wgpu::TextureFormat::Depth32Float, true)
 }

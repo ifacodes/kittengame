@@ -1,28 +1,26 @@
 //! This crate and executable are solely for running and testing the library.
 //!
 //!
-mod window;
 use anyhow::Result;
-use cgmath::{vec2, Vector2};
-use internal::{Internal, InternalData, WindowTrait};
+use glam::UVec2;
+use internal::{Internal, InternalData};
 use log::info;
 use window::*;
-use winit::dpi::PhysicalSize;
 
 pub struct KittenGame {
     window: KittenWindow,
     internal_renderer: Internal,
     internal_graphics_data: InternalData,
-    window_size: Vector2<usize>,
+    _input_system: (),
+    window_size: UVec2,
 }
 
+impl Target for KittenGame {}
+
 impl KittenGame {
-    pub fn run(title: &str, window_size: Vector2<usize>) -> Result<()> {
+    pub fn run(title: &str, window_size: UVec2) -> Result<()> {
         // initialize important stuff.
-        let (mut window, window_loop) = window::KittenWindow::new(
-            title,
-            PhysicalSize::new(window_size.x.try_into()?, window_size.y.try_into()?),
-        )?;
+        let (window, window_loop) = window::KittenWindow::new(title, window_size)?;
 
         let internal_renderer = Internal::new(&window)?;
         let internal_graphics_data = InternalData::default();
@@ -30,10 +28,11 @@ impl KittenGame {
         // audio??
         // graphics :3
 
-        let mut kitten_game = KittenGame {
+        let kitten_game = KittenGame {
             window,
             internal_renderer,
             internal_graphics_data,
+            _input_system: (),
             window_size,
         };
 
@@ -46,7 +45,7 @@ impl KittenGame {
         );
     }
     fn init(&mut self) -> Result<()> {
-        self.window.set_resizable(false);
+        self.window.set_resizable(true);
         Ok(())
     }
     fn quit(&mut self) -> Result<()> {
@@ -54,8 +53,8 @@ impl KittenGame {
         Ok(())
     }
     fn update(&mut self) -> Result<()> {
-        if self.window.resizable() {
-            self.window_size = self.window.size()?.into();
+        if self.window_size != self.window.size()? {
+            self.window_size = self.window.size()?;
         }
 
         Ok(())
@@ -72,6 +71,6 @@ impl KittenGame {
 
 fn main() -> Result<()> {
     env_logger::init();
-    KittenGame::run("Title", vec2(1270, 720))?;
+    KittenGame::run("Title", UVec2::from((1280, 720)))?;
     Ok(())
 }
